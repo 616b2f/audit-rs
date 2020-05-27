@@ -22,6 +22,10 @@ The executable is named `audit`, file extension can vary depending on your platf
 
 ## How to use
 
+### With .NET
+
+You need to build your project first, after that your assets file will be in `opt/` folder in root directory of your project.
+
 ```sh
 $ audit --project "test" --scan "./test-proj-files/dotnet-example2/project.assets.json"
 ```
