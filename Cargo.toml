@@ -3,6 +3,12 @@ name = "audit"
 version = "0.1.0"
 authors = ["Alexej Kowalew <616b2f@gmail.com>"]
 edition = "2018"
+license = "MIT"
+description = "A tool to look up CVEs of your project dependencies"
+readme = "README.md"
+repository = "https://github.com/616b2f/audit-rs"
+keywords = ["cli", "audit", "vulnerability", "scanner", "cve"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 log = "0.4.8"
