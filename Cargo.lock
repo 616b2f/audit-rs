@@ -48,7 +48,9 @@ dependencies = [
 name = "audit"
 version = "0.1.0"
 dependencies = [
+ "clap-verbosity-flag",
  "colored",
+ "env_logger",
  "jsonpath",
  "jsonpath_lib",
  "log",
@@ -128,6 +130,16 @@ dependencies = [
  "textwrap",
  "unicode-width",
  "vec_map",
+]
+
+[[package]]
+name = "clap-verbosity-flag"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7d77af89389927c728493ffeabe62bbcb4d9c5f0f805b7058b5cff1e097047d"
+dependencies = [
+ "log",
+ "structopt",
 ]
 
 [[package]]

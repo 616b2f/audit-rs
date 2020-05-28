@@ -4,6 +4,7 @@ use serde_json;
 use serde::{Serialize,Deserialize};
 use reqwest::header::{CONTENT_TYPE,AUTHORIZATION};
 use reqwest::StatusCode;
+use log::{trace};
 
 
 #[derive(Serialize, Debug)]
@@ -57,7 +58,7 @@ pub fn get(purls: Vec<String>) -> Vec<ComponentReport> {
 
         let json = serde_json::to_string(&cr).unwrap();
 
-        // println!("OssIndex Request: {}", &json);
+        trace!("OssIndex Request: {}", &json);
 
         //TODO: setup useragent like here: https://github.com/sonatype-nexus-community/auditjs/blob/master/src/Services/RequestHelpers.ts#L20-L26
         let res = client.post("https://ossindex.sonatype.org/api/v3/component-report")
@@ -68,21 +69,18 @@ pub fn get(purls: Vec<String>) -> Vec<ComponentReport> {
         match res.status() {
             StatusCode::OK => {
                 let r:Vec<ComponentReport> = res.json().unwrap();
-                println!("SUCCESS: OSSIndex API: ComponentReport: {:?}", r);
+                trace!("SUCCESS: OSSIndex API: ComponentReport: {:?}", r);
                 reports.extend(r);
             },
             StatusCode::BAD_REQUEST => {
                 let e:ErrorResponse = res.json().unwrap();
-                println!("ERROR: OSSIndex API: {:?}", e);
+                trace!("ERROR: OSSIndex API: {:?}", e);
             },
-            StatusCode::TOO_MANY_REQUESTS =>
-                println!("ERROR: OSSIndex API: to many requests, try again later."),
-            _ => println!("ERROR: OSSIndex API: Uknown error {:?}", res)
+            StatusCode::TOO_MANY_REQUESTS => {
+                trace!("ERROR: OSSIndex API: to many requests, try again later.");
+            }
+            _ => trace!("ERROR: OSSIndex API: Uknown error {:?}", res)
         }
-
-        // println!("Response: {:?}", res);
-
-        // let s = serde_json::from_str(b)
     }
 
     reports

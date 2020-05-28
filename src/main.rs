@@ -2,6 +2,8 @@ use structopt::StructOpt;
 
 use std::iter::Iterator;
 use colored::*;
+use clap_verbosity_flag;
+use log::{info};
 
 mod core;
 mod nvd;
@@ -9,7 +11,7 @@ mod purl;
 mod ossindex;
 mod dotnet_analyser;
 
-#[derive(StructOpt)]
+#[derive(Debug, StructOpt)]
 struct Cli {
     #[structopt(long = "project")]
     project: String,
@@ -19,6 +21,8 @@ struct Cli {
     #[structopt(parse(from_os_str))]
     #[structopt(short = "s", long = "scan")]
     path: std::path::PathBuf,
+    #[structopt(flatten)]
+    verbose: clap_verbosity_flag::Verbosity,
 }
 
 // fn read_references(&std::path::PathBuf: path) -> Vec<String> {
@@ -34,11 +38,11 @@ struct Cli {
 //     references;
 // }
 
-fn indent(size: usize) -> String {
-    const INDENT: &'static str = "  ";
-    (0..size).map(|_| INDENT)
-             .fold(String::with_capacity(size*INDENT.len()), |r, s| r + s)
-}
+// fn indent(size: usize) -> String {
+//     const INDENT: &'static str = "  ";
+//     (0..size).map(|_| INDENT)
+//              .fold(String::with_capacity(size*INDENT.len()), |r, s| r + s)
+// }
 
 fn search_for_vulnerabilities(dependencies: &mut Vec<core::Dependency>) {
     let mut package_urls:Vec<String> = Vec::new();
@@ -49,9 +53,16 @@ fn search_for_vulnerabilities(dependencies: &mut Vec<core::Dependency>) {
     }
     let reports:Vec<ossindex::ComponentReport> = ossindex::get(package_urls);
 
-    let mut rep = reports.iter();
+    // let dwv = reports.into_iter().filter(|x| !x.vulnerabilities.is_empty());
+    let rep:Vec<ossindex::ComponentReport> = reports.into_iter().filter(|x| !x.vulnerabilities.is_empty()).collect();
+    for d in rep.iter() {
+        for v in d.vulnerabilities.iter() {
+            info!("Response contains vulnerabilities:\n CVE: {} Title: {}\n",v.title, v.cve);
+        }
+    }
+
     for d in dependencies.iter_mut() {
-        match rep.find(|x| x.coordinates == d.package_url) {
+        match rep.iter().find(|x| x.coordinates == d.package_url) {
             Some(x) => {
                 for rv in x.vulnerabilities.iter() {
                     let v = core::Vulnerability { 
@@ -85,14 +96,19 @@ fn print_vulnerabilities(deps: &[core::Dependency]) {
                 print!("\t{}\t{}\n\tTitle: {}\n", rank, x.cve_id, x.title);
 
                 print!("\n\n");
-                // println!("{:?}", x);
-                // println!("{:?}", v);
         }
     }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::from_args();
+
+    let logf = args.verbose.log_level().unwrap();
+    if logf != log::Level::Error {
+        env_logger::Builder::new().filter(None, logf.to_level_filter()).init();
+    } else {
+        env_logger::from_env(env_logger::Env::default().default_filter_or("warn")).init();
+    }
 
     print!("Project: {}\n\n", args.project);
     // let references = read_references(&args.path);

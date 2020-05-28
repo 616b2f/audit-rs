@@ -1,24 +1,24 @@
 use std::fmt;
 
-enum EvidenceType {
-    Vendor,
-    Product,
-    Version
-}
+// enum EvidenceType {
+//     Vendor,
+//     Product,
+//     Version
+// }
 
-enum Confidence {
-    Highest,
-    High,
-    Medium,
-    Low
-}
+// enum Confidence {
+//     Highest,
+//     High,
+//     Medium,
+//     Low
+// }
 
-struct Evidence {
-    source: String,
-    name : String,
-    value: String,
-    confidence: Confidence,
-}
+// struct Evidence {
+//     source: String,
+//     name : String,
+//     value: String,
+//     confidence: Confidence,
+// }
 
 pub struct Dependency {
     pub name: String,

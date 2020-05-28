@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use serde_json;
 use serde::Deserialize;
+use log::{info,debug};
 
 use crate::purl;
 use crate::core;
@@ -28,7 +29,7 @@ struct Dep {
     dependencies: HashMap<String, String>
 }
 
-pub fn analyse(path: &String) -> Vec<core::Dependency> {
+pub fn analyse(path: &str) -> Vec<core::Dependency> {
     let mut file = File::open(path).unwrap();
     let mut packages:Vec<String> = read_project_assets(&mut file);
 
@@ -59,20 +60,20 @@ fn read_project_assets(f: &mut File) -> Vec<String> {
     let json: ProjectAssets = serde_json::from_str(&project_assets_file).unwrap();
 
     let mut packages: Vec<String> = Vec::new();
-    println!("ProjectAssets: Version: {}", json.version);
+    info!("ProjectAssets: Version: {}", json.version);
     for (tkey, target) in json.targets {
-        println!("Target: {}", tkey);
+        info!("Target: {}", tkey);
         for (dkey, dep) in target.dependencies {
-            println!("Dependency: {}", dkey);
+            info!("Dependency: {}", dkey);
             packages.push(dkey);
             for (tname, tversion) in dep.dependencies {
-                println!("Transitive dependency: {}/{}", tname, tversion.replace(" ", ""));
+                info!("Transitive dependency: {}/{}", tname, tversion.replace(" ", ""));
                 packages.push(format!("{}/{}", tname, tversion.replace(" ", "")));
             }
         }
     }
 
-    println!("Packages: {:?}", packages);
+    debug!("Packages: {:?}", packages);
     
     return packages
 }
