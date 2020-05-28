@@ -1,3 +1,5 @@
+// Common Platform Enumeration (CPE)
+
 use serde;
 use serde::Deserialize;
 

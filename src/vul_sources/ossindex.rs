@@ -6,7 +6,6 @@ use reqwest::header::{CONTENT_TYPE,AUTHORIZATION};
 use reqwest::StatusCode;
 use log::{trace};
 
-
 #[derive(Serialize, Debug)]
 struct ComponentReportRequest {
     coordinates: Vec<String>

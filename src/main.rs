@@ -6,10 +6,13 @@ use clap_verbosity_flag;
 use log::{info};
 
 mod core;
-mod nvd;
+mod cpe;
 mod purl;
-mod ossindex;
-mod dotnet_analyser;
+mod analysers;
+mod vul_sources;
+
+use analysers::dotnet_analyser;
+use vul_sources::ossindex;
 
 #[derive(Debug, StructOpt)]
 struct Cli {
