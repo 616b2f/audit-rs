@@ -1,4 +1,5 @@
 use std::fmt;
+use colored::*;
 
 // enum EvidenceType {
 //     Vendor,
@@ -19,6 +20,10 @@ use std::fmt;
 //     value: String,
 //     confidence: Confidence,
 // }
+
+pub trait Analyser {
+    fn analyse(&self, path: &str) -> Vec<Dependency>;
+}
 
 pub struct Dependency {
     pub name: String,
@@ -76,4 +81,24 @@ pub struct Vulnerability {
     pub title: String,
     pub description: String,
     pub severity: Severity,
+}
+
+pub fn print_vulnerabilities(deps: &[Dependency]) {
+    let dv = deps.iter().filter(|&x| x.vulnerabilities.len() > 0);
+    println!("Vulnerability found in:");
+    for d in dv {
+        println!("{} v{}",d.name, d.version);
+        for x in d.vulnerabilities.iter() {
+                let sev = &x.severity;
+                let rank = match sev {
+                    Severity::Critical(_) | Severity::High(_) => format!("{}", sev).red().to_string(),
+                    Severity::Medium(_) => format!("{}", sev).bright_red().to_string(),
+                    Severity::Low(_) => format!("{}", sev).yellow().to_string(),
+                    _ => format!("{}", sev)
+                };
+                print!("\t{}\t{}\n\tTitle: {}\n", rank, x.cve_id, x.title);
+
+                print!("\n\n");
+        }
+    }
 }

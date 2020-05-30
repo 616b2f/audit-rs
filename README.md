@@ -12,6 +12,10 @@ Platform Support:
 - MacOS (not tested)
 - Linux (Testet with Ubuntu 20.04)
 
+Included Analysers:
+- dotnet analyser
+- npm analyser
+
 ## How to build
 
 ```sh
@@ -22,11 +26,11 @@ The executable is named `audit`, file extension can vary depending on your platf
 
 ## How to use
 
-### With .NET
+You need to build your projects first, this is needed because many tools generate files that represent the dependency graph of your project. You can use glob pattern to specify which files hould be scanned.
 
-You need to build your project first, after that your assets file will be in `opt/` folder in root directory of your project.
+For example to scan our test project files use this:
 
 ```sh
-$ audit --project "test" --scan "./test-proj-files/dotnet-example2/project.assets.json"
+$ audit --project "test" --scan "./test-proj-files/**/*"
 ```
-currently only `project.assets.json` is supported.
+Currently we look for `project.assets.json` and `project-lock.json` files to scan.

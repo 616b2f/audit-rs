@@ -1,18 +1,21 @@
-use structopt::StructOpt;
-
-use std::iter::Iterator;
-use colored::*;
-use clap_verbosity_flag;
-use log::{info};
-
 mod core;
 mod cpe;
 mod purl;
 mod analysers;
 mod vul_sources;
 
-use analysers::dotnet_analyser;
+use structopt::StructOpt;
+
+use std::iter::Iterator;
+use clap_verbosity_flag;
+use log::{info};
+
+use crate::analysers::npm_analyser::NpmAnalyser;
+use crate::analysers::dotnet_analyser::DotNetAnalyser;
+
 use vul_sources::ossindex;
+
+use glob::{glob_with, MatchOptions};
 
 #[derive(Debug, StructOpt)]
 struct Cli {
@@ -21,31 +24,14 @@ struct Cli {
     // #[structopt(parse(from_os_str))]
     // #[structopt(short = "o", long = "out")]
     // outPath: std::path::PathBuf,
+    #[structopt(long = "dry-run")]
+    dry_run: bool,
     #[structopt(parse(from_os_str))]
     #[structopt(short = "s", long = "scan")]
     path: std::path::PathBuf,
     #[structopt(flatten)]
     verbose: clap_verbosity_flag::Verbosity,
 }
-
-// fn read_references(&std::path::PathBuf: path) -> Vec<String> {
-//     let content = std::fs::read_to_string(*path)
-//         .&expect("could not read file");
-    
-//     let mut references = Vec::new();
-//     for line in content.lines() {
-//         println!("{}", line);
-//         references.push(line.to_string());
-//     }
-
-//     references;
-// }
-
-// fn indent(size: usize) -> String {
-//     const INDENT: &'static str = "  ";
-//     (0..size).map(|_| INDENT)
-//              .fold(String::with_capacity(size*INDENT.len()), |r, s| r + s)
-// }
 
 fn search_for_vulnerabilities(dependencies: &mut Vec<core::Dependency>) {
     let mut package_urls:Vec<String> = Vec::new();
@@ -84,23 +70,13 @@ fn search_for_vulnerabilities(dependencies: &mut Vec<core::Dependency>) {
     };
 }
 
-fn print_vulnerabilities(deps: &[core::Dependency]) {
-    let dv = deps.iter().filter(|&x| x.vulnerabilities.len() > 0);
-    for d in dv {
-        print!("Vulnerability found in:\n{} v{}\n",d.name, d.version);
-        for x in d.vulnerabilities.iter() {
-                let sev = &x.severity;
-                let rank = match sev {
-                    core::Severity::Critical(_) | core::Severity::High(_) => format!("{}", sev).red().to_string(),
-                    core::Severity::Medium(_) => format!("{}", sev).bright_red().to_string(),
-                    core::Severity::Low(_) => format!("{}", sev).yellow().to_string(),
-                    _ => format!("{}", sev)
-                };
-                print!("\t{}\t{}\n\tTitle: {}\n", rank, x.cve_id, x.title);
+fn get_analysers() -> Vec<Box<dyn core::Analyser>>{
+    // let dotnet = DotNetAnalyser;
+    let mut v: Vec<Box<dyn core::Analyser>> = Vec::new();
+    v.push(Box::new(DotNetAnalyser));
+    v.push(Box::new(NpmAnalyser));
 
-                print!("\n\n");
-        }
-    }
+    v
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -128,13 +104,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // TODO check type of the file and use different functions for different files
     // e.g. parse *.csproj, project.assets.json, *.nuspec
-    let path = args.path.into_os_string().into_string().unwrap();
-    let mut dependencies = dotnet_analyser::analyse(&path);
+    let scan_pattern = args.path.into_os_string().into_string().unwrap();
+    // let mut dependencies = dotnet_analyser::analyse(&path);
+
+    let options = MatchOptions {
+        case_sensitive: false,
+        require_literal_separator: false,
+        require_literal_leading_dot: false
+    };
+
+    let mut dependencies: Vec<core::Dependency> = Vec::new();
+    for entry in glob_with(&scan_pattern, options)? {
+        let path = entry?.display().to_string();
+        println!("{}", path);
+        for a in get_analysers() {
+            let dep = a.analyse(&path);
+            for d in dep {
+                dependencies.push(d);
+            }
+        }
+    }
 
     print!("Dependencies found: {}\n\n", dependencies.len());
 
-    search_for_vulnerabilities(&mut dependencies);
-    print_vulnerabilities(&dependencies);
+    if !args.dry_run {
+        search_for_vulnerabilities(&mut dependencies);
+        core::print_vulnerabilities(&dependencies);
+    }
 
     Ok(())
 }
