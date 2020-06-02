@@ -8,7 +8,7 @@ use structopt::StructOpt;
 
 use std::iter::Iterator;
 use clap_verbosity_flag;
-use log::{info};
+use log::{info,debug};
 
 use crate::analysers::npm_analyser::NpmAnalyser;
 use crate::analysers::dotnet_analyser::DotNetAnalyser;
@@ -116,7 +116,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut dependencies: Vec<core::Dependency> = Vec::new();
     for entry in glob_with(&scan_pattern, options)? {
         let path = entry?.display().to_string();
-        println!("{}", path);
+        debug!("{}", path);
         for a in get_analysers() {
             let dep = a.analyse(&path);
             for d in dep {
